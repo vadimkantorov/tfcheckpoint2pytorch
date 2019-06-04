@@ -1,2 +1,12 @@
 # tfcheckpoint2pytorch
-Converts TensorFlow checkpoints (with index, meta and data files) to PyTorch, HDF5 and JSON
+This converter can convert TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files).
+
+For example, let's download NVidia OpenSeq2Seq [wav2letter model checkpoint](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html#training) and dump the weights. The file name will be `./w2l_plus_large.tar.gz` (this archive contains index, meta and data files).
+```
+# convert the checkpoint to PyTorch
+python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.pt
+
+# convert the checkpoint to HDF5
+python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.h5
+h5ls ./w2l_plus_large.h5
+```
