@@ -10,3 +10,5 @@ python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_pl
 python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.h5
 h5ls ./w2l_plus_large.h5
 ```
+
+**Dependencies:** Unforutanately this converter requires TensorFlow installed. However, it's okay even if it's installed via pip: `pip3 install tensorflow`. PyTorch and h5py are optional dependencies.
