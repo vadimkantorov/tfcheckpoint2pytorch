@@ -15,12 +15,9 @@ from tensorflow.python.framework import meta_graph
 from tensorflow.core.framework import types_pb2
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--tmp_dir', default = tempfile.mkdtemp())
 parser.add_argument('-i', '--checkpoint')
 parser.add_argument('-o', '--output_path', default = '')
-parser.add_argument('--onnx')
-parser.add_argument('--tensorboard')
-parser.add_argument('--graph')
+parser.add_argument('--tmp', default = tempfile.mkdtemp())
 parser.add_argument('--identityop', action = 'append', default = [])
 parser.add_argument('--ignoreattr', action = 'append', default = [])
 parser.add_argument('--input_name', action = 'append', default = [])
@@ -28,10 +25,13 @@ parser.add_argument('--input_shape', action = 'append', nargs = '+', type = int)
 parser.add_argument('--input_dtype', action = 'append', type = str)
 parser.add_argument('--output_name', action = 'append', default = [])
 parser.add_argument('--opset', default = 10, type = int)
+parser.add_argument('--onnx')
+parser.add_argument('--tensorboard')
+parser.add_argument('--graph')
 args = parser.parse_args()
 
 if args.checkpoint.endswith('.tar.gz') or args.checkpoint.endswith('.tar'):
-    checkpoint_dir = args.tmp_dir
+    checkpoint_dir = args.tmp
     tarfile.open(args.checkpoint).extractall(checkpoint_dir)
     files = [os.path.join(checkpoint_dir, d) for d in os.listdir(checkpoint_dir)]
     checkpoint_dir = files[0] if os.path.isdir(files[0]) else checkpoint_dir
@@ -78,21 +78,17 @@ if args.onnx or args.tensorboard or args.graph:
 		i = args.input_name.index(n)
 		nodes = [v for v in graph_def.node if name in v.name]
 
-		if args.input_shape:
-			shape = [None if d == -1 else d for d in args.input_shape[i]]
-		else:
-			shapes = nodes[0].attr['output_shapes'].list.shape
-			shape = [None if d.size == -1 else d.size for d in shapes[port].dim]
-
-		if args.input_dtype:
-			dtype = getattr(tensorflow, args.input_dtype[i])
-		else:
-			dtype = nodes[0].attr['output_types'].list.type[port]
+		shape = [None if d == -1 else d for d in args.input_shape[i]] if args.input_shape else [None if d.size == -1 else d.size for d in nodes[0].attr['output_shapes'].list.shape[port].dim]
+		dtype = getattr(tensorflow, args.input_dtype[i]) if args.input_dtype else nodes[0].attr['output_types'].list.type[port]
 
 		return dtype, shape
 
 	input_map = {with_port_id(a) : tensorflow.placeholder(*input_type_shape(a), name = without_port_id(a)) for a in args.input_name}
 
+	input_names = [with_port_id(a.name) for a in input_map.values()]
+	output_names = [with_port_id(o) for o in args.output_name]
+
+if args.tensorboard or args.onnx:
 	tensorflow.import_graph_def(graph_def, input_map = input_map)
 	graph = tensorflow.get_default_graph()
 
@@ -103,16 +99,15 @@ if args.tensorboard:
 	
 if args.onnx:
 	import onnx, tf2onnx
-
 	tf2onnx.utils.TF_TO_ONNX_DTYPE[types_pb2.DT_VARIANT] = tf2onnx.utils.TF_TO_ONNX_DTYPE[types_pb2.DT_FLOAT]
 	for t in dir(types_pb2):
 		if t.endswith('_REF'):
 			tf2onnx.utils.TF_TO_ONNX_DTYPE[getattr(types_pb2, t)] = tf2onnx.utils.TF_TO_ONNX_DTYPE.get(getattr(types_pb2, t[:-len('_REF')], None))
 	onnx.helper.make_node = lambda *args_, make_node_ = onnx.helper.make_node, **kwargs_: make_node_(*args_, **{k: v for k, v in kwargs_.items() if k not in args.ignoreattr})
+	onnx_graph = tf2onnx.tfonnx.process_tf_graph(graph, input_names = input_names, output_names = ['import/' + o for o in output_names], continue_on_error = True, opset = args.opset)
 
-	input_names = [with_port_id(a.name) for a in input_map.values()]
-	output_names = ['import/' + with_port_id(o) for o in args.output_name]
-	onnx_graph = tf2onnx.tfonnx.process_tf_graph(graph, input_names = input_names, output_names = output_names, continue_on_error = True, opset = args.opset)
 	model_proto = onnx_graph.make_model(os.path.basename(args.onnx))
+	#model_proto = tf2onnx.graph.GraphUtil.optimize_model_proto(model_proto)
+
 	with open(args.onnx, "wb") as f:
 		f.write(model_proto.SerializeToString())
