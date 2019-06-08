@@ -1,5 +1,11 @@
-# tfcheckpoint2pytorch
-This tool can dump model weights from TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files) to PyTorch, HDF5 NumPy binary formats and to JSON. It also can use [tf2onnx](https://github.com/onnx/tensorflow-onnx) and try to export the model to the ONNX format.
+# tfcheckpoint2pytorch features
+- dump model weights from TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files) to:
+  - PyTorch binary `*.pt` format
+  - HDF5 `*.h5`
+  - NumPy `*.npy` and `*.npz`
+  - JSON `*.json`
+- export TensorFlow models from checkpoints to ONNX format using [tf2onnx](https://github.com/onnx/tensorflow-onnx)
+- export the model graph to TensorBoard
 
 For example, let's download NVidia OpenSeq2Seq [wav2letter model checkpoint](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html#training) and dump the weights. The file name will be `./w2l_plus_large.tar.gz` (this archive contains index, meta and data files).
 
@@ -31,9 +37,16 @@ python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plu
 # https://github.com/horovod/horovod/issues/594
 
 # print all variable names to help you identify input and output names
-python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
-    --identity Horovod > graph.txt
-    
+python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --graph graph.txt \
+    --identity Horovod
+
+# export the model graph to TensorBoard logdir and open TensorBoard
+# you must provide one or several input_name
+python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --tensorboard w2l_plus_large_mp.tensorboard \
+    --identity Horovod --tensorboard w2l_plus_large_mp.tensorboard
+    --input_name 'IteratorGetNext:0'
+tensorboard --logdir w2l_plus_large_mp.tensorboard
+
 # we must force tf2onnx and ONNX to ignore some node attributes:
 # https://github.com/onnx/tensorflow-onnx/issues/578
 # https://github.com/onnx/onnx/issues/2090
@@ -42,9 +55,9 @@ python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
     --identity Horovod \
     --ignoreattr Toutput_types --ignoreattr output_shapes --ignoreattr output_types --ignoreattr predicate --ignoreattr f --ignoreattr dtypes  \
-    --output_name 'ForwardPass/fully_connected_ctc_decoder/logits:0' \
-    --input_name 'IteratorGetNext:0'
-
+    --input_name 'IteratorGetNext:0' \
+    --output_name 'ForwardPass/fully_connected_ctc_decoder/logits:0'
+  
 # you can also force input shapes and dtype
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
     --identity Horovod \
