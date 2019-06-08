@@ -1,7 +1,9 @@
 # tfcheckpoint2pytorch
-This tools can dump model weights from TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files) to PyTorch, HDF5 NumPy binary formats and to JSON. It also can use [tf2onnx](https://github.com/onnx/tensorflow-onnx) and try to export the model to the ONNX format.
+This tool can dump model weights from TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files) to PyTorch, HDF5 NumPy binary formats and to JSON. It also can use [tf2onnx](https://github.com/onnx/tensorflow-onnx) and try to export the model to the ONNX format.
 
 For example, let's download NVidia OpenSeq2Seq [wav2letter model checkpoint](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html#training) and dump the weights. The file name will be `./w2l_plus_large.tar.gz` (this archive contains index, meta and data files).
+
+# Dump weights to PyTorch binary format and to HDF5
 ```
 # convert the checkpoint to PyTorch
 python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.pt
@@ -13,8 +15,8 @@ h5ls ./w2l_plus_large.h5
 
 **Dependencies:** Unforutanately this converter requires TensorFlow installed. However, it's okay even if it's installed via pip: `pip3 install tensorflow`. PyTorch and h5py are optional dependencies.
 
-# Example
-We will try to export [NVidia OpenSeq2Seq's wav2letter speech2text model](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html) to ONNX. Unfortunately, tf2onnx [doesn't](https://github.com/onnx/tensorflow-onnx/issues/571) [support](https://github.com/onnx/tensorflow-onnx/issues/572) properly the BatchToSpaceND op that TensorFlow uses to implement dilated convolutions. So it doesn't work perfectly, but you can still probably use the result. Feel free to explore the produced `*.onnx` file in [Lutz Roeder's Netron online model explorer](https://lutzroeder.github.io/netron/).
+# Example: export openseq2seq's wav2letter speech2text model to ONNX format
+We will try to export [NVidia openseq2seq's wav2letter speech2text model](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html) to ONNX. Unfortunately, tf2onnx [doesn't](https://github.com/onnx/tensorflow-onnx/issues/571) [support](https://github.com/onnx/tensorflow-onnx/issues/572) properly the BatchToSpaceND op that TensorFlow uses to implement dilated convolutions. So it doesn't work perfectly, but you can still probably use the result. Feel free to explore the produced `*.onnx` file in [Lutz Roeder's Netron online model explorer](https://lutzroeder.github.io/netron/).
 
 ```shell
 CHECKPOINT_GOOGLE_DRIVE_URL='https://drive.google.com/file/d/10EYe040qVW6cfygSZz6HwGQDylahQNSa'
