@@ -18,7 +18,7 @@ We will try to export [NVidia OpenSeq2Seq's wav2letter speech2text model](https:
 
 ```shell
 CHECKPOINT_GOOGLE_DRIVE_URL='https://drive.google.com/file/d/10EYe040qVW6cfygSZz6HwGQDylahQNSa'
-GOOGLE_DRIVE_FILE_ID=$(echo $CHECKPOINT_GOOGLE_DRIVE_URL | rev | cut -d'/' -f1)
+GOOGLE_DRIVE_FILE_ID=$(echo $CHECKPOINT_GOOGLE_DRIVE_URL | rev | cut -d'/' -f1 | rev)
 wget --no-check-certificate -r "https://docs.google.com/uc?export=download&id=$GOOGLE_DRIVE_FILE_ID$" -O w2l_plus_large_mp.tar.gz
 
 # export model weights to HDF5
