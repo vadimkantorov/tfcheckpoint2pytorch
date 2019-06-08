@@ -7,21 +7,9 @@
 - export TensorFlow models from checkpoints to ONNX format using [tf2onnx](https://github.com/onnx/tensorflow-onnx)
 - export the model graph to TensorBoard
 
-For example, let's download NVidia OpenSeq2Seq [wav2letter model checkpoint](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html#training) and dump the weights. The file name will be `./w2l_plus_large.tar.gz` (this archive contains index, meta and data files).
+**Dependencies:** Unforutanately this converter requires TensorFlow installed. However, it's okay even if it's installed via pip: `pip3 install tensorflow`. PyTorch, h5py, tf2onnx are optional dependencies.
 
-# Dump weights to PyTorch binary format and to HDF5
-```
-# convert the checkpoint to PyTorch
-python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.pt
-
-# convert the checkpoint to HDF5
-python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.h5
-h5ls ./w2l_plus_large.h5
-```
-
-**Dependencies:** Unforutanately this converter requires TensorFlow installed. However, it's okay even if it's installed via pip: `pip3 install tensorflow`. PyTorch and h5py are optional dependencies.
-
-# Example: export openseq2seq's wav2letter speech2text model to ONNX format
+# Example: openseq2seq's wav2letter speech2text model
 We will try to export [NVidia openseq2seq's wav2letter speech2text model](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html) to ONNX. Unfortunately, tf2onnx [doesn't](https://github.com/onnx/tensorflow-onnx/issues/571) [support](https://github.com/onnx/tensorflow-onnx/issues/572) properly the BatchToSpaceND op that TensorFlow uses to implement dilated convolutions. So it doesn't work perfectly, but you can still probably use the result. Feel free to explore the produced `*.onnx` file in [Lutz Roeder's Netron online model explorer](https://lutzroeder.github.io/netron/).
 
 ```shell
@@ -29,6 +17,9 @@ CHECKPOINT_GOOGLE_DRIVE_URL='https://drive.google.com/file/d/10EYe040qVW6cfygSZz
 GOOGLE_DRIVE_FILE_ID=$(echo $CHECKPOINT_GOOGLE_DRIVE_URL | rev | cut -d'/' -f1 | rev)
 CONFIRM=$(wget --quiet --save-cookies googlecookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$GOOGLE_DRIVE_FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')
 wget --load-cookies googlecookies.txt "https://docs.google.com/uc?export=download&confirm=$CONFIRM&id=$GOOGLE_DRIVE_FILE_ID" -O w2l_plus_large_mp.tar.gz || rm googlecookies.txt # from https://gist.github.com/vladalive/535cc2aff8a9527f1d9443b036320672
+
+# export model weights to PyTorch binary format
+python3 tfcheckpoint2pytorch.py --checkpoint ./w2l_plus_large.tar.gz -o ./w2l_plus_large.pt
 
 # export model weights to HDF5
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5
