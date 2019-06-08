@@ -27,6 +27,12 @@ wget --load-cookies googlecookies.txt "https://docs.google.com/uc?export=downloa
 # export model weights to HDF5
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5
 
+# we must replace Horovod-related nodes by Identity, otherwise TensorFlow can't load the checkpoint: https://github.com/horovod/horovod/issues/594
+
+# print all variable names to help you identify input and output names
+python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
+    --identity Horovod
+    
 # export model to ONNX. you must specify input and output variable names, tfcheckpoint2pytorch will try to infer input shapes and dtype
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
     --identity Horovod \
