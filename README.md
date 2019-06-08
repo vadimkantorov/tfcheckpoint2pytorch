@@ -25,14 +25,14 @@ CONFIRM=$(wget --quiet --save-cookies googlecookies.txt --keep-session-cookies -
 wget --load-cookies googlecookies.txt "https://docs.google.com/uc?export=download&confirm=$CONFIRM&id=$GOOGLE_DRIVE_FILE_ID" -O w2l_plus_large_mp.tar.gz || rm googlecookies.txt # from https://gist.github.com/vladalive/535cc2aff8a9527f1d9443b036320672
 
 # export model weights to HDF5
-python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5 > graph.txt
+python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5
 
 # we must replace Horovod-related nodes by Identity, otherwise TensorFlow can't load the checkpoint
 # https://github.com/horovod/horovod/issues/594
 
 # print all variable names to help you identify input and output names
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
-    --identity Horovod
+    --identity Horovod > graph.txt
     
 # we must force tf2onnx and ONNX to ignore some node attributes:
 # https://github.com/onnx/tensorflow-onnx/issues/578
