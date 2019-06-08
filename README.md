@@ -1,5 +1,5 @@
 # tfcheckpoint2pytorch
-This converter can convert TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files). It also can use [tf2onnx](https://github.com/onnx/tensorflow-onnx) and try to export the model to the ONNX format.
+This tools can dump model weights from TensorFlow checkpoints (directories and tarballs containing an `*.index`, `*.meta` and `*.data-*-of-*` files) to PyTorch, HDF5 NumPy binary formats and to JSON. It also can use [tf2onnx](https://github.com/onnx/tensorflow-onnx) and try to export the model to the ONNX format.
 
 For example, let's download NVidia OpenSeq2Seq [wav2letter model checkpoint](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html#training) and dump the weights. The file name will be `./w2l_plus_large.tar.gz` (this archive contains index, meta and data files).
 ```
@@ -19,7 +19,8 @@ We will try to export [NVidia OpenSeq2Seq's wav2letter speech2text model](https:
 ```shell
 CHECKPOINT_GOOGLE_DRIVE_URL='https://drive.google.com/file/d/10EYe040qVW6cfygSZz6HwGQDylahQNSa'
 GOOGLE_DRIVE_FILE_ID=$(echo $CHECKPOINT_GOOGLE_DRIVE_URL | rev | cut -d'/' -f1 | rev)
-wget --no-check-certificate -r "https://docs.google.com/uc?export=download&id=$GOOGLE_DRIVE_FILE_ID" -O w2l_plus_large_mp.tar.gz
+CONFIRM=$(wget --quiet --save-cookies googlecookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$GOOGLE_DRIVE_FILE_ID" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')
+wget --load-cookies googlecookies.txt "https://docs.google.com/uc?export=download&confirm=$CONFIRM&id=$GOOGLE_DRIVE_FILE_ID" -O w2l_plus_large_mp.tar.gz || rm googlecookies.txt # from https://gist.github.com/vladalive/535cc2aff8a9527f1d9443b036320672
 
 # export model weights to HDF5
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5
