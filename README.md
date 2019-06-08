@@ -36,7 +36,7 @@ python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --graph gr
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --tensorboard w2l_plus_large_mp.tensorboard \
     --identity Horovod --tensorboard w2l_plus_large_mp.tensorboard
     --input_name 'IteratorGetNext:0'
-tensorboard --logdir w2l_plus_large_mp.tensorboard
+python3 -m tensorboard.main --logdir w2l_plus_large_mp.tensorboard
 
 # we must force tf2onnx and ONNX to ignore some node attributes:
 # https://github.com/onnx/tensorflow-onnx/issues/578
