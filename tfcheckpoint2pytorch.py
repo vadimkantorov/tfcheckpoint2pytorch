@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import json
 import argparse
 import tempfile
 import shutil
@@ -12,13 +13,14 @@ import tensorflow
 from tensorflow.python import pywrap_tensorflow
 from tensorflow.python.framework import meta_graph
 from tensorflow.core.framework import types_pb2
-from tensorflow.tools.graph_transforms import TransformGraph
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--tmp_dir', default = tempfile.mkdtemp())
 parser.add_argument('-i', '--checkpoint')
 parser.add_argument('-o', '--output_path', default = '')
 parser.add_argument('--onnx')
+parser.add_argument('--tensorboard')
+parser.add_argument('--graph')
 parser.add_argument('--identityop', action = 'append', default = [])
 parser.add_argument('--ignoreattr', action = 'append', default = [])
 parser.add_argument('--input_name', action = 'append', default = [])
@@ -39,9 +41,7 @@ else:
 reader = pywrap_tensorflow.NewCheckpointReader(tensorflow.train.latest_checkpoint(checkpoint_dir))
 blobs = {k : reader.get_tensor(k) for k in reader.get_variable_to_shape_map()}
 		
-
 if args.output_path.endswith('.json'):
-    import json
     with open(args.output_path, 'w') as f:
         json.dump({k : blob.tolist() for k, blob in blobs.items()}, f, sort_keys = True, indent = 2)
 elif args.output_path.endswith('.h5'):
@@ -54,14 +54,12 @@ elif args.output_path.endswith('.pt'):
     import torch
     torch.save({k : torch.from_numpy(blob) for k, blob in blobs.items()}, args.output_path)
 
-if args.onnx:
-	import onnx, tf2onnx
-
+if args.onnx or args.tensorboard or args.graph:
 	meta_graph_file = glob.glob(os.path.join(checkpoint_dir, '*.meta'))[0]
 	graph_def = meta_graph.read_meta_graph_file(meta_graph_file).graph_def
 
-	if not args.input_name or not args.output_name:
-		print('\n'.join(sorted(v.name + ' <- ' + ', '.join(v.input) for v in graph_def.node)))
+	if args.graph or (not args.input_name) or (args.onnx and not args.output_name):
+		print('\n'.join(sorted(f'{v.name} <- {node.op}(' + ', '.join(v.input) for v in graph_def.node)) + ')', file = None if not args.graph else open(args.graph, 'w'))
 		sys.exit(0)
 
 	for v in graph_def.node:
@@ -98,10 +96,13 @@ if args.onnx:
 	tensorflow.import_graph_def(graph_def, input_map = input_map)
 	graph = tensorflow.get_default_graph()
 
-	tensorboard_dir = args.onnx + '.tensorboard'
-	if os.path.exists(tensorboard_dir):
-		shutil.rmtree(tensorboard_dir)
-	tensorflow.summary.FileWriter(tensorboard_dir, graph = graph).close()
+if args.tensorboard:
+	if os.path.exists(args.tensorboard):
+		shutil.rmtree(args.tensorboard)
+	tensorflow.summary.FileWriter(args.tensorboard, graph = graph).close()
+	
+if args.onnx:
+	import onnx, tf2onnx
 
 	tf2onnx.utils.TF_TO_ONNX_DTYPE[types_pb2.DT_VARIANT] = tf2onnx.utils.TF_TO_ONNX_DTYPE[types_pb2.DT_FLOAT]
 	for t in dir(types_pb2):
