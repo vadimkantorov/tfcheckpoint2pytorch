@@ -25,13 +25,18 @@ CONFIRM=$(wget --quiet --save-cookies googlecookies.txt --keep-session-cookies -
 wget --load-cookies googlecookies.txt "https://docs.google.com/uc?export=download&confirm=$CONFIRM&id=$GOOGLE_DRIVE_FILE_ID" -O w2l_plus_large_mp.tar.gz || rm googlecookies.txt # from https://gist.github.com/vladalive/535cc2aff8a9527f1d9443b036320672
 
 # export model weights to HDF5
-python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5
+python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz -o w2l_plus_large_mp.h5 > graph.txt
 
-# we must replace Horovod-related nodes by Identity, otherwise TensorFlow can't load the checkpoint: https://github.com/horovod/horovod/issues/594
+# we must replace Horovod-related nodes by Identity, otherwise TensorFlow can't load the checkpoint
+# https://github.com/horovod/horovod/issues/594
 
 # print all variable names to help you identify input and output names
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
     --identity Horovod
+    
+# we must force tf2onnx and ONNX to ignore some node attributes:
+# https://github.com/onnx/tensorflow-onnx/issues/578
+# https://github.com/onnx/onnx/issues/2090
     
 # export model to ONNX. you must specify input and output variable names, tfcheckpoint2pytorch will try to infer input shapes and dtype
 python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l_plus_large_mp.onnx \
