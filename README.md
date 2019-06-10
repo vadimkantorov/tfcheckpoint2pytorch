@@ -7,7 +7,7 @@
 - export TensorFlow models from checkpoints to ONNX format using [tf2onnx](https://github.com/onnx/tensorflow-onnx)
 - export the model graph to TensorBoard
 
-**Dependencies:** Unforutanately this converter requires TensorFlow installed (tested with 1.13.1; 2.0 probably won't work). However, it's okay even if it's installed via pip: `pip3 install tensorflow`. PyTorch, h5py, tf2onnx are optional dependencies.
+**Dependencies:** Unforutanately this converter requires TensorFlow installed (tested with v1.13.1; v2.0 probably won't work). However, it's okay even if it's installed via pip: `pip3 install tensorflow`. PyTorch, h5py, tf2onnx are optional dependencies.
 
 # Example: openseq2seq's wav2letter speech2text model
 We will try to export [NVidia openseq2seq's wav2letter speech2text model](https://nvidia.github.io/OpenSeq2Seq/html/speech-recognition/wave2letter.html) to ONNX. Unfortunately, tf2onnx [doesn't](https://github.com/onnx/tensorflow-onnx/issues/571) [support](https://github.com/onnx/tensorflow-onnx/issues/572) properly the BatchToSpaceND op that TensorFlow uses to implement dilated convolutions. So it doesn't work perfectly, but you can still probably use the result. Feel free to explore the produced `*.onnx` file in [Lutz Roeder's Netron online model explorer](https://lutzroeder.github.io/netron/).
