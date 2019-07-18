@@ -93,8 +93,7 @@ if args.tensorboard or args.onnx:
 	graph = tensorflow.get_default_graph()
 
 if args.tensorboard:
-	if os.path.exists(args.tensorboard):
-		shutil.rmtree(args.tensorboard)
+	shutil.rmtree(args.tensorboard, ignore_errors = True)
 	tensorflow.summary.FileWriter(args.tensorboard, graph = graph).close()
 	
 if args.onnx:
