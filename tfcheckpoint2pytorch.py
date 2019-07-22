@@ -59,7 +59,7 @@ if args.onnx or args.tensorboard or args.graph:
 	graph_def = meta_graph.read_meta_graph_file(meta_graph_file).graph_def
 
 	if args.graph or (not args.input_name) or (args.onnx and not args.output_name):
-		print('\n'.join(sorted(f'{v.name} <- {node.op}(' + ', '.join(v.input) for v in graph_def.node)) + ')', file = None if not args.graph else open(args.graph, 'w'))
+		print('\n'.join(sorted(f'{v.name} <- {v.op}(' + ', '.join(v.input) for v in graph_def.node)) + ')', file = None if not args.graph else open(args.graph, 'w'))
 		sys.exit(0)
 
 	for v in graph_def.node:
