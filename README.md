@@ -64,5 +64,7 @@ python3 tfcheckpoint2pytorch.py --checkpoint w2l_plus_large_mp.tar.gz --onnx w2l
     --ignoreattr Toutput_types --ignoreattr output_shapes --ignoreattr output_types --ignoreattr predicate --ignoreattr f --ignoreattr dtypes  \
     --input_name 'IteratorGetNext:0' --input_shape -1 -1 64 --input_dtype half \
     --output_name 'ForwardPass/fully_connected_ctc_decoder/logits:0'
-     
+
+# download slot-attention_object_discovery.pt from https://console.cloud.google.com/storage/browser/gresearch/slot-attention
+python3 tfcheckpoint2pytorch.py --checkpoint slot-attention_object_discovery.zip -o slot-attention_object_discovery.pt
 ```

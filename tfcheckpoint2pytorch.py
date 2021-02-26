@@ -6,11 +6,17 @@ import argparse
 import tempfile
 import shutil
 import tarfile
+import zipfile
 import collections
 
 import numpy as np
 import tensorflow
-from tensorflow.python import pywrap_tensorflow
+
+try:
+    from tensorflow.python.pywrap_tensorflow import NewCheckpointReader
+except:
+    from tensorflow.compat.v1.train import NewCheckpointReader
+
 from tensorflow.python.framework import meta_graph
 from tensorflow.core.framework import types_pb2
 
@@ -35,10 +41,15 @@ if args.checkpoint.endswith('.tar.gz') or args.checkpoint.endswith('.tar'):
     tarfile.open(args.checkpoint).extractall(checkpoint_dir)
     files = [os.path.join(checkpoint_dir, d) for d in os.listdir(checkpoint_dir)]
     checkpoint_dir = files[0] if os.path.isdir(files[0]) else checkpoint_dir
+elif args.checkpoint.endswith('.zip'):
+    checkpoint_dir = args.tmp
+    zipfile.ZipFile(args.checkpoint).extractall(checkpoint_dir)
+    files = [os.path.join(checkpoint_dir, d) for d in os.listdir(checkpoint_dir)]
+    checkpoint_dir = files[0] if os.path.isdir(files[0]) else checkpoint_dir
 else:
     checkpoint_dir = args.checkpoint
 
-reader = pywrap_tensorflow.NewCheckpointReader(tensorflow.train.latest_checkpoint(checkpoint_dir))
+reader = NewCheckpointReader(tensorflow.train.latest_checkpoint(checkpoint_dir))
 blobs = {k : reader.get_tensor(k) for k in reader.get_variable_to_shape_map()}
 		
 if args.output_path.endswith('.json'):
@@ -52,7 +63,7 @@ elif args.output_path.endswith('.npy') or args.output_path.endswith('.npz'):
     (np.savez if args.output_path[-1] == 'z' else numpy.save)(args.output_path, **blobs)
 elif args.output_path.endswith('.pt'):
     import torch
-    torch.save({k : torch.from_numpy(blob) for k, blob in blobs.items()}, args.output_path)
+    torch.save({k : (torch.as_tensor(blob) if not np.isscalar(blob) else torch.tensor(blob)  )  if isinstance(blob, np.ndarray) else blob for k, blob in blobs.items()}, args.output_path)
 
 if args.onnx or args.tensorboard or args.graph:
 	meta_graph_file = glob.glob(os.path.join(checkpoint_dir, '*.meta'))[0]
